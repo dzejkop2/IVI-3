@@ -17,7 +17,7 @@
 const static char *TAG = "EXAMPLE";
 
 /*---------------------------------------------------------------
-        ADC General Macros
+        ADC General Macrosxdxdxdxdxdxdxd
 ---------------------------------------------------------------*/
 
 #define CHANNEL          ADC_CHANNEL_0
