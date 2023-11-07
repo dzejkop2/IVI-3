@@ -16,6 +16,7 @@ int tcp_client_init(const char* host_ip, uint16_t port)
 {
     int addr_family = 0;
     int ip_protocol = 0;
+    int sock;
 
     struct sockaddr_in dest_addr;
     inet_pton(AF_INET, host_ip, &dest_addr.sin_addr);
@@ -24,17 +25,24 @@ int tcp_client_init(const char* host_ip, uint16_t port)
     addr_family = AF_INET;
     ip_protocol = IPPROTO_IP;
 
-    int sock = socket(addr_family, SOCK_STREAM, ip_protocol);
-    if (sock < 0) {
-        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-        return -1;
-    }
-    ESP_LOGI(TAG, "Socket created, connecting to %s:%d", host_ip, port);
+    while(1) {
+        // Attempt to create the socket
+        sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+        if (sock < 0) {
+            ESP_LOGI(TAG, "Unable to create socket, retrying socket creation in 1 second...");
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
 
-    int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-    if (err != 0) {
-        ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
-        return -2;
+        // Attempt to connect
+        int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+        if (err != 0) {
+            ESP_LOGI(TAG, "Socket unable to connect, retrying socket creation in 1 second...");
+            close(sock);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            continue;
+        }
+        break;
     }
     ESP_LOGI(TAG, "Successfully connected");
     return sock;
